@@ -1,0 +1,9 @@
+baseURL = "https://nhite.github.io/"
+languageCode = "en-us"
+title = "Nhite is Hip-Terraform"
+
+theme = "docdock"
+
+
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
