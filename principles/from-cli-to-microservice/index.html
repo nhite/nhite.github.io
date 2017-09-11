@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="generator" content="Hugo 0.27" />
+    <meta name="description" content="This article explains how to turn a golang utility into a webservice using gRPC (and protobuf). I take the example of Hashicorp tools because they are often used as a leverage for the DevOps transformation. Often, the Ops use the tools for themselves, but when comes the time to provide a service around them, they are usually scared to open the engine. They prefer to make a factory around the service, which is often less reliable than a little piece of code fully tested.">
+
+
+    <title>From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC :: Nhite is Hip-Terraform</title>
+    <link rel="shortcut icon" href="/images/favicon.png" type="image/x-icon" />
+    <link href="/css/nucleus.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/hybrid.css" rel="stylesheet">
+    <link href="/css/featherlight.min.css" rel="stylesheet">
+    <link href="/css/horsey.css" rel="stylesheet">
+    
+    <link href="/css/theme.css" rel="stylesheet">
+    
+    
+      <link href="/css/theme-gray.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/jquery-2.x.min.js"></script>
+    <style type="text/css">
+      :root #header + #content > #left > #rlblock_left {
+        display:none !important;
+      }
+    </style>
+
+    
+
+    
+
+  </head>
+  <body class="" data-url="/principles/from-cli-to-microservice/">
+    <nav id="sidebar" class="">
+
+
+
+
+
+<div class="highlightable">
+  <div id="header-wrapper">
+    <div id="header">
+       
+	 
+
+
+    </div>
+    
+        <div class="searchbox">
+    <label for="search-by"><i class="fa fa-search"></i></label>
+    <input data-search-input id="search-by" type="text" placeholder="Search...">
+    <span data-search-clear=""><i class="fa fa-close"></i></span>
+</div>
+<script type="text/javascript" src="/js/lunr.min.js"></script>
+<script type="text/javascript" src="/js/horsey.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/nhite.github.io\/";
+</script>
+<script type="text/javascript" src="/js/search.js"></script>
+
+    
+  </div>
+
+  
+    <ul class="topics">
+        
+            <li data-nav-id="/" class="dd-item">
+            <a href="/"><i class="fa fa-fw fa-home"></i></a>
+            </li>
+        
+        
+        
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/principles/" class="dd-item 
+        parent
+        
+        
+        ">
+      <a href="/principles/">
+        <span>Principles</span>
+
+        
+        
+
+          
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+          
+
+        
+
+        
+      </a>
+      
+        <ul>
+          
+          
+          
+          
+        
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/principles/from-cli-to-microservice/" class="dd-item
+     active
+      ">
+        <a href="/principles/from-cli-to-microservice/">
+        <span>From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC</span> 
+        
+        </a></li>
+     
+  
+ 
+
+            
+          
+        
+        </ul>
+              
+    </li>
+  
+ 
+
+          
+        
+
+        
+        <section id="shortcuts">
+            
+                <li class="" role="">
+                    <h3>More</h3>
+                    <a href="https://github.com/nhite/nhite"><i class='fa fa-github'></i> Github repo</a>
+                    
+                </li>
+            
+        </section>    
+        
+        
+
+        
+    </ul>
+    
+     
+    <section id="footer">
+      
+    </section>
+  </div>
+</nav>
+
+
+
+
+        <section id="body">
+        <div id="overlay"></div>
+        <div class="padding highlightable">
+        
+          <div id="top-bar">
+            
+
+            <div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+                <span id="sidebar-toggle-span">
+                  <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                    <i class="fa fa-bars"></i>
+                  </a>
+                </span>
+                <span id="toc-menu"><i class="fa fa-list-alt"></i></span>
+                <span class="links">
+                
+
+
+
+
+
+
+
+ <a href='/'></a> > <a href='/principles/'>Principles</a> > From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC
+
+ 
+
+ 
+
+   
+                </span>
+            </div>
+            <div class="progress">
+    <div class="wrapper">
+<nav id="TableOfContents">
+<ul>
+<li><a href="#about-the-cli-utilities">About the cli utilities</a>
+<ul>
+<li><a href="#hashicorp-s-cli">Hashicorp&rsquo;s cli</a></li>
+<li><a href="#example">Example</a></li>
+</ul></li>
+<li><a href="#micro-services">Micro-services</a>
+<ul>
+<li><a href="#rest">Rest?</a></li>
+<li><a href="#rpc">RPC!</a>
+<ul>
+<li><a href="#grpc">gRPC</a></li>
+<li><a href="#the-protobuf-contract">The protobuf contract</a></li>
+<li><a href="#the-implementation-of-the-contract-into-the-server">The implementation of the &ldquo;contract&rdquo; into the server</a>
+<ul>
+<li><a href="#service-implementation">&ldquo;service implementation&rdquo;</a></li>
+<li><a href="#service-registration">&ldquo;service registration&rdquo;</a></li>
+<li><a href="#actually-calling-the-run-method">Actually calling the <code>Run()</code> method</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#a-very-quick-client">A very quick client</a></li>
+</ul></li>
+<li><a href="#going-further">Going further</a>
+<ul>
+<li><a href="#stdout-stderr">stdout / stderr</a>
+<ul>
+<li><a href="#side-note-about-race-conditions">Side note about race conditions</a></li>
+<li><a href="#interactivity">Interactivity</a></li>
+</ul></li>
+<li><a href="#terraform">Terraform ?</a>
+<ul>
+<li><a href="#about-concurrency">About concurrency</a></li>
+<li><a href="#what-will-i-test">What will I test?</a></li>
+<li><a href="#hacking-terraform">hacking Terraform</a>
+<ul>
+<li><a href="#creating-the-protobuf-contract">Creating the protobuf contract</a></li>
+</ul></li>
+<li><a href="#the-go-implementation-of-the-interface">The go implementation of the interface</a></li>
+<li><a href="#setting-a-grpc-server-in-the-main-function">Setting a gRPC server in the main function</a></li>
+<li><a href="#testing-it">Testing it</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</nav>
+    </div>
+</div>
+
+          </div>
+        
+        
+        <div id="body-inner">
+          
+            <h1>From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC</h1>
+          
+
+
+
+
+
+
+<p>This article has been originally published on <a href="https://blog.owulveryck.info/2017/09/02/from-command-line-tools-to-microservices---the-example-of-hashicorp-tools-terraform-and-grpc.html">Olivier Wulveryck&rsquo;s blog</a></p>
+
+<p>This post is a little bit different from the last ones. As usual, the introduction tries to be open, but it quickly goes deeper into a go implementation.
+Some of the explanations may be tricky from time to times and therefore not very clear. As usual, do not hesitate to send me any comment via this blog or via twitter <a href="https://twitter.com/owulveryck">@owulveryck</a>.</p>
+
+<p><strong>TL;DR</strong>: This is a step-by-step example that turns a golang cli utility into a webservice powered by gRPC and protobuf. The code can be found <a href="https://github.com/owulveryck/cli-grpc-example">here</a>.</p>
+
+<h1 id="about-the-cli-utilities">About the cli utilities</h1>
+
+<p>I come from the sysadmin world&hellip; Precisely the Unix world (I have been a BSD user for years). Therefore I have learned to use and love &ldquo;<em>the cli utilities</em>&rdquo;. Cli utilities are all those tools that make Unix sexy and &ldquo;user-friendly&rdquo;.</p>
+
+<p><center>
+Because, yes, Unix <strong>is user-friendly</strong> (it&rsquo;s just picky about its friends<sup class="footnote-ref" id="fnref:1"><a rel="footnote" href="#fn:1">1</a></sup>).
+</center></p>
+
+<p>From a user perspective, cli tools remains a must nowadays because:</p>
+
+<ul>
+<li>there are usually developed in the pure Unix philosophy: simple enough to use for what they were made for;</li>
+<li>they can be easily wrapped into scripts. Therefore, it is easy to automate cli actions.</li>
+</ul>
+
+<p>The point with cli application is that they are mainly developed for an end-user that we call &ldquo;an operator&rdquo;. As Unix is a multi-user operating system, several operators can use the same tool, but they have to be logged onto the same host.</p>
+
+<p>In case of a remote execution, it&rsquo;s possible to execute the cli via <code>ssh</code>, but dealing with automation, network interruption and resuming starts to be tricky.
+For remote and concurrent execution web-services are more suitable.</p>
+
+<p>Let&rsquo;s see if turning a cli tool into a webservice without re-coding the whole logic is easy in go?</p>
+
+<h2 id="hashicorp-s-cli">Hashicorp&rsquo;s cli</h2>
+
+<p>For the purpose of this post, and because I am using Hashicorp tools at work, I will take <a href="https://twitter.com/mitchellh">@mitchellh</a>&rsquo;s framework for developing command line utilities.
+This package is used in all of the Hashicorp tools and is called&hellip;&hellip;&hellip;&hellip;&hellip;. &ldquo;<a href="https://github.com/mitchellh/cli">cli</a>&rdquo;!</p>
+
+<p>This library provides a <a href="https://godoc.org/github.com/mitchellh/cli#Command"><code>Command</code></a> type that represents any action that the cli will execute.
+<code>Command</code> is a go <code>interface</code> composed of three methods:</p>
+
+<ul>
+<li><code>Help()</code> that returns a string describing how to use the command;</li>
+<li><code>Run(args []string)</code> that takes an array of string as arguments (all cli parameters of the command) and returns an integer (the exit code);</li>
+<li><code>Synopsis()</code> that returns a string describing what the command is about.</li>
+</ul>
+
+<p><em>Note</em>: I assume that you know what an interface is (especially in go). If you don&rsquo;t, just google, or even better, buy the book <a href="https://www.amazon.com/Programming-Language-Addison-Wesley-Professional-Computing/dp/0134190440">The Go Programming Language</a> and read the <em>chapter 7</em> :).</p>
+
+<p>The main object that holds the business logic of the cli package is an implementation of <a href="https://godoc.org/github.com/mitchellh/cli#CLI"><code>Cli</code></a>.
+One of the elements of the Cli structure is <code>Commands</code> which is a <code>map</code> that takes the name of the action as key. The name passed is a string and is the one that will be used on the command line. The value of the <code>map</code> is a function that returns a <code>Command</code>. This function is named <a href="https://godoc.org/github.com/mitchellh/cli#CommandFactory"><code>CommandFactory</code></a>. According to the documentation, the factory is needed because <em>we may need to setup some state on the struct that implements the command itself</em>. Good idea!</p>
+
+<h2 id="example">Example</h2>
+
+<p>First, let&rsquo;s create a very simple tool using the &ldquo;cli&rdquo; package.
+The tool will have two &ldquo;commands&rdquo;:</p>
+
+<ul>
+<li>hello: will display <em>hello args&hellip;.</em>  on <code>stdout</code></li>
+<li>goodbye: will display <em>goodbye args&hellip;</em> on <code>stderr</code></li>
+</ul>
+
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">func</span> <span style="color: #a6e22e">main</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">c</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">NewCLI</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;server&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;1.0.0&quot;</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #a6e22e">c</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span> <span style="color: #f8f8f2">=</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">[</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">:]</span>
+      <span style="color: #a6e22e">c</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Commands</span> <span style="color: #f8f8f2">=</span> <span style="color: #66d9ef">map</span><span style="color: #f8f8f2">[</span><span style="color: #66d9ef">string</span><span style="color: #f8f8f2">]</span><span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">CommandFactory</span><span style="color: #f8f8f2">{</span>
+            <span style="color: #e6db74">&quot;hello&quot;</span><span style="color: #f8f8f2">:</span> <span style="color: #66d9ef">func</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Command</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+                      <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">HelloCommand</span><span style="color: #f8f8f2">{},</span> <span style="color: #66d9ef">nil</span>
+            <span style="color: #f8f8f2">},</span>
+            <span style="color: #e6db74">&quot;goodbye&quot;</span><span style="color: #f8f8f2">:</span> <span style="color: #66d9ef">func</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Command</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+                      <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">GoodbyeCommand</span><span style="color: #f8f8f2">{},</span> <span style="color: #66d9ef">nil</span>
+            <span style="color: #f8f8f2">},</span>
+      <span style="color: #f8f8f2">}</span>
+      <span style="color: #a6e22e">exitStatus</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">c</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Run</span><span style="color: #f8f8f2">()</span>
+      <span style="color: #f92672">...</span> 
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+As seen before, the first object created is a <code>Cli</code>. Then the <code>Commands</code> field is filled with the two commands &ldquo;hello&rdquo; and &ldquo;goodbye&rdquo; as keys, and an anonymous function that simply returns two structures that will implement the <code>Command</code> interface.</p>
+
+<p>Now, let&rsquo;s create the <code>HelloCommand</code> structure that will fulfill the <a href="https://godoc.org/github.com/mitchellh/cli#Command"><code>cli.Command</code></a> interface:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">HelloCommand</span> <span style="color: #66d9ef">struct</span><span style="color: #f8f8f2">{}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">t</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">HelloCommand</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Help</span><span style="color: #f8f8f2">()</span> <span style="color: #66d9ef">string</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #e6db74">&quot;hello [arg0] [arg1] ... says hello to everyone&quot;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">t</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">HelloCommand</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Run</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">args</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">string</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Println</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;hello&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">args</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #ae81ff">0</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">t</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">HelloCommand</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Synopsis</span><span style="color: #f8f8f2">()</span> <span style="color: #66d9ef">string</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #e6db74">&quot;A sample command that says hello on stdout&quot;</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>The <code>GoodbyeCommand</code> is similar, and I omit it for brevity.</p>
+
+<p>After a simple <code>go build</code>, here is the behavior of our new cli tool:
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span>~ ./server <span style="color: #f8f8f2">help</span>
+Usage: server <span style="color: #f92672">[</span>--version<span style="color: #f92672">]</span> <span style="color: #f92672">[</span>--help<span style="color: #f92672">]</span> &lt;command&gt; <span style="color: #f92672">[</span>&lt;args&gt;<span style="color: #f92672">]</span>
+
+Available commands are:
+    goodbye    synopsis...
+    hello      A sample <span style="color: #f8f8f2">command</span> that says hello on stdout
+
+~ ./server hello -help
+hello <span style="color: #f92672">[</span>arg0<span style="color: #f92672">]</span> <span style="color: #f92672">[</span>arg1<span style="color: #f92672">]</span> ... says hello to everyone
+
+~ ./server/server hello a b c
+hello <span style="color: #f92672">[</span>a b c<span style="color: #f92672">]</span>
+</pre></div>
+</p>
+
+<p>So far, so good!
+Now, let&rsquo;s see if we can turn this into a webservice.</p>
+
+<h1 id="micro-services">Micro-services</h1>
+
+<p><center><em>The biggest issue in changing a monolith into microservices lies in changing the communication pattern. - Martin Fowler</em><sup class="footnote-ref" id="fnref:2"><a rel="footnote" href="#fn:2">2</a></sup></center></p>
+
+<p>There is, according to me, two options to consider to turn our application into a webservice:</p>
+
+<ul>
+<li>a RESTish communication and interface;</li>
+<li>an RPC based communication.</li>
+</ul>
+
+<p>SOAP is not an option anymore because it does not provide any advantage over the REST and RPC methods.</p>
+
+<h2 id="rest">Rest?</h2>
+
+<p>I&rsquo;ve always been a big fan of the REST &ldquo;protocol&rdquo;. It is easy to understand and to write. On top of that, it is verbose and allows a good description of &ldquo;business objects&rdquo;.
+But, its verbosity, that is a strength, quickly become a weakness when applied to machine-to-machine communication.
+The &ldquo;contract&rdquo; between the client and the server have to be documented manually (via something like swagger for example). And, as you only transfer objects and states, the server must handle the request, understand it, and apply it to any business logic before returning a result.
+Don&rsquo;t get me wrong, REST remains a very good thing. But it is very good when you think about it from the beginning of your conception (and with a user experience in mind).</p>
+
+<p>Indeed, it may not be a good choice for easily turning a cli into a webservice.</p>
+
+<h2 id="rpc">RPC!</h2>
+
+<p>RPC, on the other hand, may be a good fit because there would be a very little modification of the code.
+Actually, the principle would be to:</p>
+
+<ol>
+<li>trigger a network listener</li>
+<li>receive a <em>procedure call with arguments</em>,</li>
+<li>execute the function</li>
+<li>send back the result</li>
+</ol>
+
+<p>The function that holds the business logic does not need any change at all.</p>
+
+<p>The drawbacks of RPCs are:</p>
+
+<ul>
+<li>the development language need a library that supports RPC,</li>
+<li>the client and the server must use the same communication protocol.</li>
+</ul>
+
+<p>Those drawbacks have been addressed by Google. They gave to the community a polyglot RPC implementation called gRPC.</p>
+
+<p>Let me quote this from the chapter &ldquo;<a href="https://landing.google.com/sre/book/chapters/production-environment.html#our-software-infrastructure-XQs4iw">The Production Environment at Google, from the Viewpoint of an SRE</a>&rdquo; of the SRE book:</p>
+
+<blockquote>
+<p><em>All of Google&rsquo;s services communicate using a Remote Procedure Call (RPC) infrastructure named Stubby; an open source version, gRPC, is available. Often, an RPC call is made even when a call to a subroutine in the local program needs to be performed. This makes it easier to refactor the call into a different server if more modularity is needed, or when a server&rsquo;s codebase grows. GSLB can load balance RPCs in the same way it load balances externally visible services.</em></p>
+</blockquote>
+
+<p>Sounds cool! Let&rsquo;s dig into gRPC!</p>
+
+<h3 id="grpc">gRPC</h3>
+
+<p>We will now implement a gRPC server that will trigger the <code>cli.Commands</code>.</p>
+
+<p>It will receive &ldquo;orders&rdquo;, and depending on the expected call, it will:</p>
+
+<ul>
+<li>Implements a <code>HelloCommand</code> and trigger its <code>Run()</code> function;</li>
+<li>Implements a <code>GoodbyeCommand</code> and trigger its <code>Run()</code> function</li>
+</ul>
+
+<p>We will also implement a gRPC client.</p>
+
+<p>For the server and the client to communicate, they have to share the same protocol and understand each other with a contract.
+<em>Protocol Buffers (a.k.a., protobuf) are Google&rsquo;s language-neutral, platform-neutral, extensible mechanism for serializing structured data</em>
+Even if it&rsquo;s not mandatory, gRPC is usually used with the <em>Protocol Buffer</em>.</p>
+
+<p>So, first, let&rsquo;s implement the <em>contract</em> with/in <em>protobuf</em>!</p>
+
+<h3 id="the-protobuf-contract">The protobuf contract</h3>
+
+<p>The protocol is described in a simple text file and a specific DSL. Then there is a compiler that serializess the description and turns it into a contract that can be understood by the targeted language.</p>
+
+<p>Here is a simple definition that matches our need:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #a6e22e">syntax</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&quot;proto3&quot;</span><span style="color: #f8f8f2">;</span>
+
+<span style="color: #f92672">package</span> <span style="color: #f8f8f2">myservice;</span>
+
+<span style="color: #66d9ef">service</span> <span style="color: #f8f8f2">MyService</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">rpc</span> <span style="color: #f8f8f2">Hello</span> <span style="color: #f8f8f2">(Arg)</span> <span style="color: #66d9ef">returns</span> <span style="color: #f8f8f2">(Output)</span> <span style="color: #f8f8f2">{}</span>
+    <span style="color: #66d9ef">rpc</span> <span style="color: #f8f8f2">Goodbye</span> <span style="color: #f8f8f2">(Arg)</span> <span style="color: #66d9ef">returns</span> <span style="color: #f8f8f2">(Output)</span> <span style="color: #f8f8f2">{}</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">message</span> <span style="color: #a6e22e">Arg</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">repeated</span> <span style="color: #66d9ef">string</span> <span style="color: #a6e22e">args</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">1</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">message</span> <span style="color: #a6e22e">Output</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">int32</span> <span style="color: #a6e22e">retcode</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">1</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>Here is the English description of the contract:</p>
+
+<hr />
+
+<p>Let&rsquo;s take a service called <em>MyService</em>. This service provides to actions (commands) remotely:</p>
+
+<ul>
+<li><em>Hello</em></li>
+<li><em>Goodbye</em></li>
+</ul>
+
+<p>Both takes as argument an object called <em>Arg</em> that contains an infinite number of <em>string</em> (this array is stored in a field called <em>args</em>).</p>
+
+<p>Both actions return an object called <em>Output</em> that returns an integer.</p>
+
+<hr />
+
+<p>The specification is clear enough to code a server and a client. But the string implementation may differ from a language to another.
+You may now understand why we need to &ldquo;compile&rdquo; the file.
+Let&rsquo;s generate a definition suitable for the go language:</p>
+
+<p><code>protoc --go_out=plugins=grpc:. myservice/myservice.proto</code></p>
+
+<p><em>Note</em> the definition file has been placed into a subdirectory <code>myservice</code></p>
+
+<p>This command generates a <code>myservice/myservice.pb.go</code> file. This file is part of the <code>myservice</code> package, <strong>as specified in the myservice.proto</strong>.</p>
+
+<p>The package myservice holds the &ldquo;contract&rdquo; translated in <code>go</code>. It is full of interfaces and holds helpers function to easily create a server and/or a client.
+Let&rsquo;s see how.</p>
+
+<h3 id="the-implementation-of-the-contract-into-the-server">The implementation of the &ldquo;contract&rdquo; into the server</h3>
+
+<p>Let&rsquo;s go back to the roots and read the doc of gRPC. In the <a href="https://grpc.io/docs/tutorials/basic/go.html">gRPC basics -  go</a> tutorial is written:</p>
+
+<p><em>To build and start a server, we:</em></p>
+
+<ol>
+<li><em>Specify the port we want to use to listen for client requests&hellip;</em></li>
+<li><em>Create an instance of the gRPC server using grpc.NewServer().</em></li>
+<li><em><strong>Register our service implementation with the gRPC server.</strong></em></li>
+<li><em>Call Serve() on the server with our port details to do a blocking wait until the process is killed or Stop() is called.</em></li>
+</ol>
+
+<p>Let&rsquo;s decompose the third step.</p>
+
+<h4 id="service-implementation">&ldquo;service implementation&rdquo;</h4>
+
+<p>The <code>myservice/myservice.pb.go</code> file has defined an interface for our service.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">MyServiceServer</span> <span style="color: #66d9ef">interface</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #75715e">// Sends a greeting</span>
+      <span style="color: #a6e22e">Hello</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #a6e22e">Goodbye</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>To create a &ldquo;service implementation&rdquo; in our &ldquo;cli&rdquo; utility, we need to create any structure that implements the Hello(&hellip;) and Goodbye(&hellip;) methods.
+Let&rsquo;s call our structure <code>grpcCommands</code>:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f92672">package</span> <span style="color: #a6e22e">main</span>
+
+<span style="color: #f92672">...</span>
+<span style="color: #f92672">import</span> <span style="color: #e6db74">&quot;myservice&quot;</span>
+<span style="color: #f92672">...</span>
+
+<span style="color: #66d9ef">type</span> <span style="color: #a6e22e">grpcCommands</span> <span style="color: #66d9ef">struct</span> <span style="color: #f8f8f2">{}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Hello</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{int32(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Goodbye</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{int32(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p><em>Note</em>: *myservice.Arg is a structure that holds an array of string named Args. It corresponds to the <code>proto</code> definition exposed before.</p>
+
+<h4 id="service-registration">&ldquo;service registration&rdquo;</h4>
+
+<p>As written in the doc, we need to register the implementation.
+In the generated file <code>myservice.pb.go</code>, there is a <code>RegisterMyServiceServer</code> function.
+This function is simply an autogenerated wrapper around the <a href="https://godoc.org/google.golang.org/grpc#Server.RegisterService"><code>RegisterService</code></a> method of the gRPC <a href="https://godoc.org/google.golang.org/grpc#Server"><code>Server</code></a> type.</p>
+
+<p>This method takes two arguments:</p>
+
+<ul>
+<li>An instance of the gRPC server</li>
+<li>the implementation of the contract.</li>
+</ul>
+
+<p>The 4 steps of the documentation can be implemented like this:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #a6e22e">listener</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">_</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">net</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Listen</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;tcp&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;127.0.0.1:1234&quot;</span><span style="color: #f8f8f2">)</span>
+<span style="color: #a6e22e">grpcServer</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">grpc</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">NewServer</span><span style="color: #f8f8f2">()</span>
+<span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">RegisterMyServiceServer</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">grpcServer</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">{})</span>
+<span style="color: #a6e22e">grpcServer</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Serve</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">listener</span><span style="color: #f8f8f2">)</span>
+</pre></div>
+
+
+<p>So far so good&hellip; The code compiles, but does not perform any action and always return 0.</p>
+
+<h4 id="actually-calling-the-run-method">Actually calling the <code>Run()</code> method</h4>
+
+<p>Now, let&rsquo;s use the <code>grpcCommands</code> structure as a bridge between the <code>cli.Command</code> and the grpc service.</p>
+
+<p>What we will do is to embed the <code>c.Commands</code> object inside the structure and trigger the appropriate objects&rsquo; <code>Run()</code> method from the corresponding gRPC procedures.</p>
+
+<p>So first, let&rsquo;s embed the <code>c.Commands</code> object.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">grpcCommands</span> <span style="color: #66d9ef">struct</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">commands</span> <span style="color: #66d9ef">map</span><span style="color: #f8f8f2">[</span><span style="color: #66d9ef">string</span><span style="color: #f8f8f2">]</span><span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">CommandFactory</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>Then change the <code>Hello</code> and <code>Goodbye</code> methods of <code>grpcCommands</code> so they trigger respectively:</p>
+
+<ul>
+<li><code>HelloCommand.Run(args)</code></li>
+<li><code>GoodbyeCommand.Run(args)</code></li>
+</ul>
+
+<p>with <code>args</code> being the array of string passed via the <code>in</code> argument of the protobuf.</p>
+
+<p>as defined in <code>myservice.Arg.Args</code> (the protobuf compiler has transcribed the <code>repeated string args</code> argument into a filed <code>Args []string</code> of the type <code>Arg</code>.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Hello</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">runner</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">commands</span><span style="color: #f8f8f2">[</span><span style="color: #e6db74">&quot;hello&quot;</span><span style="color: #f8f8f2">]()</span>
+      <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
+            <span style="color: #66d9ef">return</span> <span style="color: #f8f8f2">int32(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">),</span> <span style="color: #a6e22e">err</span>
+      <span style="color: #f8f8f2">}</span>
+      <span style="color: #a6e22e">ret</span> <span style="color: #f8f8f2">=</span> <span style="color: #f8f8f2">int32(</span><span style="color: #a6e22e">runner</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Run</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">in</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">))</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{int32(</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">)},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Goodbye</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">runner</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">commands</span><span style="color: #f8f8f2">[</span><span style="color: #e6db74">&quot;goodbye&quot;</span><span style="color: #f8f8f2">]()</span>
+      <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
+            <span style="color: #66d9ef">return</span> <span style="color: #f8f8f2">int32(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">),</span> <span style="color: #a6e22e">err</span>
+      <span style="color: #f8f8f2">}</span>
+      <span style="color: #a6e22e">ret</span> <span style="color: #f8f8f2">=</span> <span style="color: #f8f8f2">int32(</span><span style="color: #a6e22e">runner</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Run</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">in</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">))</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{int32(</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">)},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>Let&rsquo;s factorize a little bit and create a wrapper (that will be useful in the next section):</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">func</span> <span style="color: #a6e22e">wrapper</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">cf</span> <span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">CommandFactory</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">args</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">string</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int32</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">runner</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">cf</span><span style="color: #f8f8f2">()</span>
+      <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
+            <span style="color: #66d9ef">return</span> <span style="color: #f8f8f2">int32(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">),</span> <span style="color: #a6e22e">err</span>
+      <span style="color: #f8f8f2">}</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #f8f8f2">int32(</span><span style="color: #a6e22e">runner</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Run</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">in</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">)),</span> <span style="color: #66d9ef">nil</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Hello</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">wrapper</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">commands</span><span style="color: #f8f8f2">[</span><span style="color: #e6db74">&quot;hello&quot;</span><span style="color: #f8f8f2">])</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{int32(</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">)},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Goodbye</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">wrapper</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">commands</span><span style="color: #f8f8f2">[</span><span style="color: #e6db74">&quot;goodbye&quot;</span><span style="color: #f8f8f2">])</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{int32(</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">)},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>Now we have everything needed to turn our cli into a gRPC service. With a little bit of plumbing, the code compiles and the service runs.
+The full implementation of the service can be found <a href="https://github.com/owulveryck/cli-grpc-example/blob/master/server/main.go">here</a>.</p>
+
+<h2 id="a-very-quick-client">A very quick client</h2>
+
+<p>The principle is the same for the client. All the needed methods are auto-generated and wrapped by the <code>protoc</code> command.</p>
+
+<p>The steps are:</p>
+
+<ol>
+<li>create a network connection to the gRPC server (with TLS)</li>
+<li>create a new instance of myservice&rsquo;client</li>
+<li>call a function and get a result</li>
+</ol>
+
+<p>for example:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #a6e22e">conn</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">_</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">grpc</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Dial</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;127.0.0.1:1234&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">grpc</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">WithInsecure</span><span style="color: #f8f8f2">())</span>
+<span style="color: #66d9ef">defer</span> <span style="color: #a6e22e">conn</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Close</span><span style="color: #f8f8f2">()</span>
+<span style="color: #a6e22e">client</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">NewMyServiceClient</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">conn</span><span style="color: #f8f8f2">)</span>
+<span style="color: #a6e22e">output</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">client</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Hello</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Background</span><span style="color: #f8f8f2">(),</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">[</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">:]})</span>
+</pre></div>
+
+
+<p><em>Note</em>: By default, gRPC requires some TLS. I have specified the <code>WithInsecure</code> option because I am running on the local loop and it is just an example. Don&rsquo;t do that in production.</p>
+
+<h1 id="going-further">Going further</h1>
+
+<p>Normally, Unix tools should respect a <a href="http://www.faqs.org/docs/artu/ch01s06.html">certain philosophy</a> such as:</p>
+
+<p><center><strong>Rule of Silence: When a program has nothing surprising to say, it should say nothing.</strong></center></p>
+
+<p>Anyway, we all know that tools are verbose, so let&rsquo;s add a feature that sends the content of stdout and stderr back to the client. (And anyway, we are implementing a service greeting. It would be useless if it was silent :))</p>
+
+<h2 id="stdout-stderr">stdout / stderr</h2>
+
+<p>What we want to do is to change the output of the commands.
+Therefore, we simply add two more fields to the <code>Output</code> object in the protobuf definition:
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">message</span> <span style="color: #a6e22e">Output</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">int32</span> <span style="color: #a6e22e">retcode</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">1</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #66d9ef">bytes</span> <span style="color: #a6e22e">stdout</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">2</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #66d9ef">bytes</span> <span style="color: #a6e22e">stderr</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">3</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+</p>
+
+<p>The generated file contains the following definition for <code>Output</code>:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">Output</span> <span style="color: #66d9ef">struct</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">Retcode</span> <span style="color: #66d9ef">int32</span>  <span style="color: #e6db74">`protobuf:&quot;varint,1,opt,name=retcode&quot; json:&quot;retcode,omitempty&quot;`</span>
+      <span style="color: #a6e22e">Stdout</span>  <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span> <span style="color: #e6db74">`protobuf:&quot;bytes,2,opt,name=stdout,proto3&quot; json:&quot;stdout,omitempty&quot;`</span>
+      <span style="color: #a6e22e">Stderr</span>  <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span> <span style="color: #e6db74">`protobuf:&quot;bytes,3,opt,name=stderr,proto3&quot; json:&quot;stderr,omitempty&quot;`</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>We have changed the Output type, but as all the fields are embedded within the structure, the &ldquo;service implementation&rdquo; interface (<code>grpcCommand</code>) has not changed.
+We only need to change a little bit the implementation in order to return a completed <code>Output</code> object:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Hello</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">var</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span>
+    <span style="color: #75715e">// ...</span>
+    <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>Now we have to change the <code>wrapper</code> function that has been defined previously to return the content of stdout and stderr:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">func</span> <span style="color: #a6e22e">wrapper</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">cf</span> <span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">CommandFactory</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">args</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">string</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int32</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #75715e">// ...</span>
+<span style="color: #f8f8f2">}</span>
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Hello</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">var</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span>
+    <span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">wrapper</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">commands</span><span style="color: #f8f8f2">[</span><span style="color: #e6db74">&quot;hello&quot;</span><span style="color: #f8f8f2">],</span> <span style="color: #a6e22e">in</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">)</span>
+    <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">myservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>All the job of capturing stdout and stderr is done within the wrapper function (This solution has been found on <a href="https://stackoverflow.com/questions/10473800/in-go-how-do-i-capture-stdout-of-a-function-into-a-string">StackOverflow</a>:</p>
+
+<ul>
+<li>first, we backup the standard <code>stdout</code> and <code>stderr</code></li>
+<li>then, we create two times, two file descriptor linked with a pipe (one for stdout and one for stderr)</li>
+<li>we assign the standard <code>stdout</code> and <code>stderr</code> to the input of the pipe. From now on, every interaction will be written to the pipe and will be received into the variable declared as output of the pipe</li>
+<li>then, we actually execute the function (the business logic)</li>
+<li>we get the content of the output and save it to variable</li>
+<li>and then we restore stdout and stderr</li>
+</ul>
+
+<p>Here is the implementation of the <code>wrapper</code>:
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">func</span> <span style="color: #a6e22e">wrapper</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">cf</span> <span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">CommandFactory</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">args</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">string</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int32</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+	<span style="color: #66d9ef">var</span> <span style="color: #a6e22e">ret</span> <span style="color: #66d9ef">int32</span>
+	<span style="color: #a6e22e">oldStdout</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stdout</span> <span style="color: #75715e">// keep backup of the real stdout</span>
+	<span style="color: #a6e22e">oldStderr</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stderr</span>
+
+	<span style="color: #75715e">// Backup the stdout</span>
+	<span style="color: #a6e22e">r</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">w</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Pipe</span><span style="color: #f8f8f2">()</span>
+        <span style="color: #75715e">// ...</span>
+	<span style="color: #a6e22e">re</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">we</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Pipe</span><span style="color: #f8f8f2">()</span>
+        <span style="color: #75715e">//...</span>
+	<span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stdout</span> <span style="color: #f8f8f2">=</span> <span style="color: #a6e22e">w</span>
+	<span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stderr</span> <span style="color: #f8f8f2">=</span> <span style="color: #a6e22e">we</span>
+
+	<span style="color: #a6e22e">runner</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">cf</span><span style="color: #f8f8f2">()</span>
+        <span style="color: #75715e">// ...</span>
+	<span style="color: #a6e22e">ret</span> <span style="color: #f8f8f2">=</span> <span style="color: #f8f8f2">int32(</span><span style="color: #a6e22e">runner</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Run</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">args</span><span style="color: #f8f8f2">))</span>
+
+	<span style="color: #a6e22e">outC</span> <span style="color: #f92672">:=</span> <span style="color: #f8f8f2">make(</span><span style="color: #66d9ef">chan</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span><span style="color: #f8f8f2">)</span>
+	<span style="color: #a6e22e">errC</span> <span style="color: #f92672">:=</span> <span style="color: #f8f8f2">make(</span><span style="color: #66d9ef">chan</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span><span style="color: #f8f8f2">)</span>
+	<span style="color: #75715e">// copy the output in a separate goroutine so printing can&#39;t block indefinitely</span>
+	<span style="color: #66d9ef">go</span> <span style="color: #66d9ef">func</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">{</span>
+		<span style="color: #66d9ef">var</span> <span style="color: #a6e22e">buf</span> <span style="color: #a6e22e">bytes</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Buffer</span>
+		<span style="color: #a6e22e">io</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Copy</span><span style="color: #f8f8f2">(</span><span style="color: #f92672">&amp;</span><span style="color: #a6e22e">buf</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">r</span><span style="color: #f8f8f2">)</span>
+		<span style="color: #a6e22e">outC</span> <span style="color: #f92672">&lt;-</span> <span style="color: #a6e22e">buf</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Bytes</span><span style="color: #f8f8f2">()</span>
+	<span style="color: #f8f8f2">}()</span>
+	<span style="color: #66d9ef">go</span> <span style="color: #66d9ef">func</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">{</span>
+		<span style="color: #66d9ef">var</span> <span style="color: #a6e22e">buf</span> <span style="color: #a6e22e">bytes</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Buffer</span>
+		<span style="color: #a6e22e">io</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Copy</span><span style="color: #f8f8f2">(</span><span style="color: #f92672">&amp;</span><span style="color: #a6e22e">buf</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">re</span><span style="color: #f8f8f2">)</span>
+		<span style="color: #a6e22e">errC</span> <span style="color: #f92672">&lt;-</span> <span style="color: #a6e22e">buf</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Bytes</span><span style="color: #f8f8f2">()</span>
+	<span style="color: #f8f8f2">}()</span>
+
+	<span style="color: #75715e">// back to normal state</span>
+	<span style="color: #a6e22e">w</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Close</span><span style="color: #f8f8f2">()</span>
+	<span style="color: #a6e22e">we</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Close</span><span style="color: #f8f8f2">()</span>
+	<span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stdout</span> <span style="color: #f8f8f2">=</span> <span style="color: #a6e22e">oldStdout</span> <span style="color: #75715e">// restoring the real stdout</span>
+	<span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stderr</span> <span style="color: #f8f8f2">=</span> <span style="color: #a6e22e">oldStderr</span>
+	<span style="color: #a6e22e">stdout</span> <span style="color: #f92672">:=</span> <span style="color: #f92672">&lt;-</span><span style="color: #a6e22e">outC</span>
+	<span style="color: #a6e22e">stderr</span> <span style="color: #f92672">:=</span> <span style="color: #f92672">&lt;-</span><span style="color: #a6e22e">errC</span>
+	<span style="color: #66d9ef">return</span> <span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">nil</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+</p>
+
+<p><strong>Et voilà</strong>, the cli has been transformed into a grpc webservice. The full code is available on <a href="https://github.com/owulveryck/cli-grpc-example">GitHub</a>.</p>
+
+<h3 id="side-note-about-race-conditions">Side note about race conditions</h3>
+
+<p>The map used for cli.Command is not concurrent safe. But there is no goroutine that actually writes it so it should be ok.
+Anyway, I have written a little benchmark of our function and passed it to the race detector. And it did not find any problem:</p>
+
+<pre><code class="language-shell">go test -race -bench=.      
+goos: linux
+goarch: amd64
+pkg: github.com/owulveryck/cli-grpc-example/server
+BenchmarkHello-2             200          10483400 ns/op
+PASS
+ok      github.com/owulveryck/cli-grpc-example/server   4.130s
+</code></pre>
+
+<p>The benchmark shows good result on my little chromebook, gRPC seems very efficient, but actually testing it is beyond the scope of this article.</p>
+
+<h3 id="interactivity">Interactivity</h3>
+
+<p>Sometimes, cli tools ask questions. Another good point with gRPC is that it is bidirectional. Therefore, it would be possible to send the question from the server to the client and get the response back. I let that for another experiment.</p>
+
+<h2 id="terraform">Terraform ?</h2>
+
+<p>At the beginning of this article, I have explained that I was using this specific cli in order to derivate Hashicorp tools and turned them into webservices.
+Let&rsquo;s take an example with the excellent terraform.</p>
+
+<p>We are going to derivate terraform by changing only its cli interface, add some gRPC powered by protobuf&hellip;</p>
+
+<p>$$\frac{\partial terraform}{\partial cli} + grpc^{protobuf} = \mu service(terraform)$$ <sup class="footnote-ref" id="fnref:3"><a rel="footnote" href="#fn:3">3</a></sup></p>
+
+<h3 id="about-concurrency">About concurrency</h3>
+
+<p>Terraform uses <a href="https://www.terraform.io/docs/backends/index.html">backends</a> to store its states.
+By default, it relies on the local filesystem, which is, obviously, not concurrent safe. It does not scale and cannot be used when dealing with webservices.
+For the purpose of my article, I won&rsquo;t dig into the backend principle and stick to the local one.
+Hence, this will only work with one and only one client. If you plan to do more work around terraform-as-a-service, changing the backend is a must!</p>
+
+<h3 id="what-will-i-test">What will I test?</h3>
+
+<p>In order to narrow the exercise, I will partially implement the <code>plan</code> command.</p>
+
+<p>My test case is the creation of an <code>EC2</code> instance on AWS. This example is a copy/paste of the example <a href="https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/two-tier">Basic Two-Tier AWS Architecture</a>.</p>
+
+<p>I will not implement any kind of interactivity. Therefore I have added some default values for the ssh key name and path.</p>
+
+<p>Let&rsquo;s check that the basic cli is working:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span>localhost two-tier <span style="color: #f92672">[</span>master*<span style="color: #f92672">]</span> terraform plan <span style="color: #f8f8f2">|</span> tail
+      enable_classiclink_dns_support:   <span style="color: #e6db74">&quot;&lt;computed&gt;&quot;</span>
+      enable_dns_hostnames:             <span style="color: #e6db74">&quot;&lt;computed&gt;&quot;</span>
+      enable_dns_support:               <span style="color: #e6db74">&quot;true&quot;</span>
+      instance_tenancy:                 <span style="color: #e6db74">&quot;&lt;computed&gt;&quot;</span>
+      ipv6_association_id:              <span style="color: #e6db74">&quot;&lt;computed&gt;&quot;</span>
+      ipv6_cidr_block:                  <span style="color: #e6db74">&quot;&lt;computed&gt;&quot;</span>
+      main_route_table_id:              <span style="color: #e6db74">&quot;&lt;computed&gt;&quot;</span>
+
+Plan: <span style="color: #ae81ff">9</span> to add, <span style="color: #ae81ff">0</span> to change, <span style="color: #ae81ff">0</span> to destroy.
+</pre></div>
+
+
+<p>Ok, let&rsquo;s &ldquo;hack&rdquo; terraform!</p>
+
+<h3 id="hacking-terraform">hacking Terraform</h3>
+
+<h4 id="creating-the-protobuf-contract">Creating the protobuf contract</h4>
+
+<p>The contract will be placed in a <code>terraformservice</code> package.
+I am using a similar approach as the one used for the greeting example described before:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #a6e22e">syntax</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&quot;proto3&quot;</span><span style="color: #f8f8f2">;</span>
+
+<span style="color: #f92672">package</span> <span style="color: #f8f8f2">terraformservice;</span>
+
+<span style="color: #66d9ef">service</span> <span style="color: #f8f8f2">Terraform</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">rpc</span> <span style="color: #f8f8f2">Plan</span> <span style="color: #f8f8f2">(Arg)</span> <span style="color: #66d9ef">returns</span> <span style="color: #f8f8f2">(Output)</span> <span style="color: #f8f8f2">{}</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">message</span> <span style="color: #a6e22e">Arg</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">repeated</span> <span style="color: #66d9ef">string</span> <span style="color: #a6e22e">args</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">1</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">message</span> <span style="color: #a6e22e">Output</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">int32</span> <span style="color: #a6e22e">retcode</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">1</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #66d9ef">bytes</span> <span style="color: #a6e22e">stdout</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">2</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #66d9ef">bytes</span> <span style="color: #a6e22e">stderr</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">3</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>Then I generate the <code>go</code> version of the contract with:</p>
+
+<p><code>protoc --go_out=plugins=grpc:. terraformservice/terraform.proto</code></p>
+
+<h3 id="the-go-implementation-of-the-interface">The go implementation of the interface</h3>
+
+<p>I am using a similar structure as the one defined in the previous example.
+I only change the methods to match the new ones:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">grpcCommands</span> <span style="color: #66d9ef">struct</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">commands</span> <span style="color: #66d9ef">map</span><span style="color: #f8f8f2">[</span><span style="color: #66d9ef">string</span><span style="color: #f8f8f2">]</span><span style="color: #a6e22e">cli</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">CommandFactory</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Plan</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">terraformservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">terraformservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">wrapper</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">commands</span><span style="color: #f8f8f2">[</span><span style="color: #e6db74">&quot;plan&quot;</span><span style="color: #f8f8f2">],</span> <span style="color: #a6e22e">in</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">terraformservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>The wrapper function remains exactly the same as the one defined before because I didn&rsquo;t change the Output format.</p>
+
+<h3 id="setting-a-grpc-server-in-the-main-function">Setting a gRPC server in the main function</h3>
+
+<p>The only modification that has to be done is to create a listener for the grpc like the one we did before.
+We place it in the main code, just before the execution of the <code>Cli.Run()</code> call:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">len(</span><span style="color: #a6e22e">cliRunner</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">)</span> <span style="color: #f92672">==</span> <span style="color: #ae81ff">0</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #a6e22e">log</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Println</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;Listening on 127.0.0.1:1234&quot;</span><span style="color: #f8f8f2">)</span>
+        <span style="color: #a6e22e">listener</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">net</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Listen</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;tcp&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;127.0.0.1:1234&quot;</span><span style="color: #f8f8f2">)</span>
+        <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
+                <span style="color: #a6e22e">log</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Fatalf</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;failed to listen: %v&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span><span style="color: #f8f8f2">)</span>
+        <span style="color: #f8f8f2">}</span>
+        <span style="color: #a6e22e">grpcServer</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">grpc</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">NewServer</span><span style="color: #f8f8f2">()</span>
+        <span style="color: #a6e22e">terraformservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">RegisterTerraformServer</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">grpcServer</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">cliRunner</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Commands</span><span style="color: #f8f8f2">})</span>
+        <span style="color: #75715e">// determine whether to use TLS</span>
+        <span style="color: #a6e22e">grpcServer</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Serve</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">listener</span><span style="color: #f8f8f2">)</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<h3 id="testing-it">Testing it</h3>
+
+<p>The code compiles without any problem.
+I have triggered the <code>terraform init</code> and I have a listening process waiting for a call:</p>
+
+<pre><code class="language-shelli">~ netstat -lntp | grep 1234
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+tcp        0      0 127.0.0.1:1234          0.0.0.0:*               LISTEN      9053/tfoliv     
+</code></pre>
+
+<p>Let&rsquo;s launch a client:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">func</span> <span style="color: #a6e22e">main</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">{</span>
+      <span style="color: #a6e22e">conn</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">grpc</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Dial</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;127.0.0.1:1234&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">grpc</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">WithInsecure</span><span style="color: #f8f8f2">())</span>
+      <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
+            <span style="color: #a6e22e">log</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Fatal</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;Cannot reach grpc server&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #f8f8f2">}</span>
+      <span style="color: #66d9ef">defer</span> <span style="color: #a6e22e">conn</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Close</span><span style="color: #f8f8f2">()</span>
+      <span style="color: #a6e22e">client</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">terraformservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">NewTerraformClient</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">conn</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #a6e22e">output</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">client</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Plan</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Background</span><span style="color: #f8f8f2">(),</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">terraformservice</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">[</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">:]})</span>
+      <span style="color: #a6e22e">stdout</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">bytes</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">NewBuffer</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">output</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stdout</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #a6e22e">stderr</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">bytes</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">NewBuffer</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">output</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stderr</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #a6e22e">io</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Copy</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #a6e22e">io</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Copy</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stderr</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Println</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">output</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Retcode</span><span style="color: #f8f8f2">)</span>
+      <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Exit</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">output</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Retcode</span><span style="color: #f8f8f2">)</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<pre><code class="language-shell">~ ./grpcclient
+~ echo $?
+~ 0
+</code></pre>
+
+<p>Too bad, the proper function has been called, the return code is ok, but all the output went to the console of the server&hellip; Anyway, the RPC has worked.</p>
+
+<p>I can even remove the default parameters and pass them as an argument of my client:</p>
+
+<pre><code class="language-shell">~ ./grpcclient -var 'key_name=terraform' -var 'public_key_path=~/.ssh/terraform.pub'
+~ echo $?
+~ 0
+</code></pre>
+
+<p>And let&rsquo;s see if I give a non existent path:</p>
+
+<pre><code class="language-shell">~ ./grpcclient -var 'key_name=terraform' -var 'public_key_path=~/.ssh/nonexistent'
+~ echo $?
+~ 1
+</code></pre>
+
+<p><em>about the output</em>: I have been a little bit optimistic about the stdout and stderr.
+Actually, to make it work, the best option would be to implement a custom <code>UI</code> (it should not be difficult because <a href="https://godoc.org/github.com/mitchellh/cli#Ui"><code>Ui is also an interface</code></a>).
+I will try an implementation as soon as I will have enough time to do so. But for now, I have reached my first goal, and this post is long enough :)</p>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>Transforming terraform into a webservice has required a very little modification of the terraform code itself which is very good for maintenance purpose:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span>diff --git a/main.go b/main.go
+index ca4ec7c..da5215b 100644
+<span style="color: #f92672">--- a/main.go</span>
+<span style="color: #a6e22e">+++ b/main.go</span>
+<span style="color: #75715e">@@ -5,14 +5,18 @@ import (</span>
+        &quot;io&quot;
+        &quot;io/ioutil&quot;
+        &quot;log&quot;
+<span style="color: #a6e22e">+       &quot;net&quot;</span>
+        &quot;os&quot;
+        &quot;runtime&quot;
+        &quot;strings&quot;
+        &quot;sync&quot;
+ 
+<span style="color: #a6e22e">+       &quot;google.golang.org/grpc&quot;</span>
+<span style="color: #a6e22e">+</span>
+        &quot;github.com/hashicorp/go-plugin&quot;
+        &quot;github.com/hashicorp/terraform/helper/logging&quot;
+        &quot;github.com/hashicorp/terraform/terraform&quot;
+<span style="color: #a6e22e">+       &quot;github.com/hashicorp/terraform/terraformservice&quot;</span>
+        &quot;github.com/mattn/go-colorable&quot;
+        &quot;github.com/mattn/go-shellwords&quot;
+        &quot;github.com/mitchellh/cli&quot;
+<span style="color: #75715e">@@ -185,6 +189,18 @@ func wrappedMain() int {</span>
+        PluginOverrides.Providers = config.Providers
+        PluginOverrides.Provisioners = config.Provisioners
+ 
+<span style="color: #a6e22e">+       if len(cliRunner.Args) == 0 {</span>
+<span style="color: #a6e22e">+               log.Println(&quot;Listening on 127.0.0.1:1234&quot;)</span>
+<span style="color: #a6e22e">+               listener, err := net.Listen(&quot;tcp&quot;, &quot;127.0.0.1:1234&quot;)</span>
+<span style="color: #a6e22e">+               if err != nil {</span>
+<span style="color: #a6e22e">+                       log.Fatalf(&quot;failed to listen: %v&quot;, err)</span>
+<span style="color: #a6e22e">+               }</span>
+<span style="color: #a6e22e">+               grpcServer := grpc.NewServer()</span>
+<span style="color: #a6e22e">+               terraformservice.RegisterTerraformServer(grpcServer, &amp;grpcCommands{cliRunner.Commands})</span>
+<span style="color: #a6e22e">+               // determine whether to use TLS</span>
+<span style="color: #a6e22e">+               grpcServer.Serve(listener)</span>
+<span style="color: #a6e22e">+       }</span>
+<span style="color: #a6e22e">+</span>
+        exitCode, err := cliRunner.Run()
+        if err != nil {
+                Ui.Error(fmt.Sprintf(&quot;Error executing CLI: %s&quot;, err.Error()))
+</pre></div>
+
+
+<p>Of course, there is a bit of work to setup a complete terraform-as-a-service architecture, but it looks promising.</p>
+
+<p>Regarding grpc and protobuf:
+gRPC is a very nice protocol, I am really looking forward an implementation in javascript to target the browser
+(Meanwhile it is possible and easy to setup a grpc-to-json proxy if any web client is needed).</p>
+
+<p>But it reminds us that the main target of RPC is machine-to-machine communication. This is something that the ease-of-use-and-read of json has shadowed&hellip;</p>
+<div class="footnotes">
+
+<hr />
+
+<ol>
+<li id="fn:1">This sentence is not from me. I read it once, somewhere, on the Internet. I cannot find anybody to give the credit to.
+ <a class="footnote-return" href="#fnref:1"><sup>[return]</sup></a></li>
+<li id="fn:2">from <a href="https://martinfowler.com/articles/microservices.html#SmartEndpointsAndDumbPipes">Martin Fowler&rsquo;s Microservices definition</a>.
+ <a class="footnote-return" href="#fnref:2"><sup>[return]</sup></a></li>
+<li id="fn:3">I know, this mathematical equation come from nowhere. But I simply like the beautifulness of this language. (I would have been damned by my math teachers because I have used the mathematical language to describe something that is not mathematical. Would you please forgive me, gentlemen :)
+ <a class="footnote-return" href="#fnref:3"><sup>[return]</sup></a></li>
+</ol>
+</div>
+
+
+<footer class=" footline" >
+	
+</footer>
+
+
+
+
+        
+
+      </div>
+    </div>
+
+    
+ 
+    
+
+    <div id="navigation">
+        
+        
+        
+        
+            
+            
+                
+                    
+                    
+                
+                
+
+                    
+                    
+                        
+                    
+                    
+
+                    
+                        
+            
+            
+                
+                    
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+                        
+            
+            
+                
+                    
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+            
+        
+                    
+            
+        
+                    
+            
+        
+        
+        
+
+
+        
+            <a class="nav nav-prev" href="/principles/" title="Principles"> <i class="fa fa-chevron-left"></i></a>
+        
+        
+    </div>
+
+    </section>
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>    
+
+    <script src="/js/clipboard.min.js"></script>
+<script src="/js/featherlight.min.js"></script>
+<script src="/js/html5shiv-printshiv.min.js"></script>
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/js/modernizr.custom.71422.js"></script>
+<script src="/js/learn.js"></script>
+<script src="/js/hugo-learn.js"></script>
+
+
+<link href="/mermaid/mermaid.css" type="text/css" rel="stylesheet"/>
+<script src="/mermaid/mermaid.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+    
+
+  </body>
+</html>
+

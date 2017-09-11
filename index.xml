@@ -6,9 +6,20 @@
     <description>Recent content on Nhite is Hip-Terraform</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
+    <lastBuildDate>Sat, 02 Sep 2017 13:28:36 +0200</lastBuildDate>
     
 	<atom:link href="https://nhite.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC</title>
+      <link>https://nhite.github.io/principles/from-cli-to-microservice/</link>
+      <pubDate>Sat, 02 Sep 2017 13:28:36 +0200</pubDate>
+      
+      <guid>https://nhite.github.io/principles/from-cli-to-microservice/</guid>
+      <description>This article has been originally published on Olivier Wulveryck&amp;rsquo;s blog
+This post is a little bit different from the last ones. As usual, the introduction tries to be open, but it quickly goes deeper into a go implementation. Some of the explanations may be tricky from time to times and therefore not very clear. As usual, do not hesitate to send me any comment via this blog or via twitter @owulveryck.</description>
+    </item>
     
     <item>
       <title></title>

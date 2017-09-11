@@ -19,8 +19,3 @@ identifier = "ds"
 url = "https://github.com/nhite/nhite"
 weight = 1
 
-[[menu.shortcuts]]
-name = "<i class='fa fa-bookmark'></i> Blog entry"
-identifier = "owulveryck"
-url = "https://blog.owulveryck.info/2017/09/02/from-command-line-tools-to-microservices---the-example-of-hashicorp-tools-terraform-and-grpc.html"
-weight = 2
