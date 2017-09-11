@@ -30,5 +30,14 @@ This post is a little bit different from the last ones. As usual, the introducti
       <description></description>
     </item>
     
+    <item>
+      <title>Architecture diagrams</title>
+      <link>https://nhite.github.io/principles/architecture/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://nhite.github.io/principles/architecture/</guid>
+      <description>sequenceDiagram participant Client participant Nhite participant Backend participant Terraform Client-Nhite: push Nhite-Backend: push Nhite-Client: ID Client-Nhite: plan ID Nhite-Backend: Get ID Nhite-Nhite: cd ID Nhite--Terraform: commands/plan.go Nhite-Client: result Client-Nhite: apply ID Nhite-Backend: Get ID Nhite-Nhite: cd ID Nhite--Terraform: commands/apply.go Nhite-Client: result  </description>
+    </item>
+    
   </channel>
 </rss>

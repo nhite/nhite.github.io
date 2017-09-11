@@ -9,11 +9,19 @@ sequenceDiagram
     participant Client
     participant Nhite
     participant Backend
-    Note left of Client: calling the push command
-    loop Zip
-        Client->Client: Ziping the current directory
-    end
-  
-    Client->>Nhite: gRPC sending pb.Message
+    participant Terraform
+    Client->>Nhite: push
+    Nhite->>Backend: push
+    Nhite->>Client: ID
+    Client->>Nhite: plan ID
+    Nhite->>Backend: Get ID
+    Nhite->>Nhite: cd ID
+    Nhite-->>Terraform: commands/plan.go
+    Nhite->>Client: result
+    Client->>Nhite: apply ID
+    Nhite->>Backend: Get ID
+    Nhite->>Nhite: cd ID
+    Nhite-->>Terraform: commands/apply.go
+    Nhite->>Client: result
 {{< /mermaid >}}
 

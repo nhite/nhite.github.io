@@ -7,7 +7,7 @@
     <meta name="description" content="">
 
 
-    <title>Principles :: Nhite is Hip-Terraform</title>
+    <title>Architecture diagrams :: Nhite is Hip-Terraform</title>
     <link rel="shortcut icon" href="/images/favicon.png" type="image/x-icon" />
     <link href="/css/nucleus.css" rel="stylesheet">
     <link href="/css/font-awesome.min.css" rel="stylesheet">
@@ -33,7 +33,7 @@
     
 
   </head>
-  <body class="" data-url="/principles/">
+  <body class="" data-url="/principles/architecture/">
     <nav id="sidebar" class="">
 
 
@@ -82,7 +82,7 @@
     
     <li data-nav-id="/principles/" class="dd-item 
         parent
-        active
+        
         
         ">
       <a href="/principles/">
@@ -135,7 +135,7 @@
   
     
       <li data-nav-id="/principles/architecture/" class="dd-item
-     
+     active
       ">
         <a href="/principles/architecture/">
         <span>Architecture diagrams</span> 
@@ -203,7 +203,12 @@
 
 
 
- <a href='/'></a> > Principles
+
+
+
+ <a href='/'></a> > <a href='/principles/'>Principles</a> > Architecture diagrams
+
+ 
 
  
 
@@ -221,84 +226,37 @@
         
         <div id="body-inner">
           
-            <h1>Principles</h1>
+            <h1>Architecture diagrams</h1>
           
 
 
 
 
+<div class="mermaid" align="center" >
+sequenceDiagram
+    participant Client
+    participant Nhite
+    participant Backend
+    participant Terraform
+    Client->>Nhite: push
+    Nhite->>Backend: push
+    Nhite->>Client: ID
+    Client->>Nhite: plan ID
+    Nhite->>Backend: Get ID
+    Nhite->>Nhite: cd ID
+    Nhite-->>Terraform: commands/plan.go
+    Nhite->>Client: result
+    Client->>Nhite: apply ID
+    Nhite->>Backend: Get ID
+    Nhite->>Nhite: cd ID
+    Nhite-->>Terraform: commands/apply.go
+    Nhite->>Client: result
+</div>
 
 
 <footer class=" footline" >
 	
 </footer>
-
-
-
-	
-
-	<div class="extra-pagination inner">
-	<nav class="pagination" role="navigation">
-	
-	<span class="page-number">Page 1 of 1</span>
-	
-</nav>
-
-	</div>
-
-	
-	   <article class="post principles">
-    <header class="post-header">
-        <h2 class="post-title"><a href="/principles/from-cli-to-microservice/">From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This article has been originally published on Olivier Wulveryck&rsquo;s blog
-This post is a little bit different from the last ones. As usual, the introduction tries to be open, but it quickly goes deeper into a go implementation. Some of the explanations may be tricky from time to times and therefore not very clear. As usual, do not hesitate to send me any comment via this blog or via twitter @owulveryck. <a class="read-more" href="/principles/from-cli-to-microservice/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-	
-	   <article class="post principles">
-    <header class="post-header">
-        <h2 class="post-title"><a href="/principles/architecture/">Architecture diagrams</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>sequenceDiagram participant Client participant Nhite participant Backend participant Terraform Client-Nhite: push Nhite-Backend: push Nhite-Client: ID Client-Nhite: plan ID Nhite-Backend: Get ID Nhite-Nhite: cd ID Nhite--Terraform: commands/plan.go Nhite-Client: result Client-Nhite: apply ID Nhite-Backend: Get ID Nhite-Nhite: cd ID Nhite--Terraform: commands/apply.go Nhite-Client: result   <a class="read-more" href="/principles/architecture/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-	
-
-	<div style="margin-bottom:2rem"></div>
-
-	<nav class="pagination" role="navigation">
-	
-	<span class="page-number">Page 1 of 1</span>
-	
-</nav>
-
 
 
 
@@ -370,6 +328,7 @@ This post is a little bit different from the last ones. As usual, the introducti
             
                 
                     
+                    
                 
                 
 
@@ -391,7 +350,7 @@ This post is a little bit different from the last ones. As usual, the introducti
 
 
         
-            <a class="nav nav-prev" href="/" title=""> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-prev" href="/principles/from-cli-to-microservice/" title="From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC"> <i class="fa fa-chevron-left"></i></a>
         
         
             <a class="nav nav-next" href="/principles/from-cli-to-microservice/" title="From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
@@ -420,3 +379,4 @@ This post is a little bit different from the last ones. As usual, the introducti
 
   </body>
 </html>
+
