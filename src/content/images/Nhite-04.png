@@ -1,0 +1,15 @@
+{
+ "error": {
+  "errors": [
+   {
+    "domain": "usageLimits",
+    "reason": "quotaExceeded",
+    "message": "The download quota for this file has been exceeded",
+    "locationType": "other",
+    "location": "quota.download"
+   }
+  ],
+  "code": 403,
+  "message": "The download quota for this file has been exceeded"
+ }
+}
