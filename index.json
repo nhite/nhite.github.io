@@ -39,14 +39,14 @@
 	"title": "",
 	"tags": [],
 	"description": "",
-	"content": " Hip-Terraform "
+	"content": " Hip-Terraform  Terraform is hip, so is Nhite! \n"
 },
 {
 	"uri": "https://nhite.github.io/get_started/about/",
-	"title": "About nhite",
+	"title": "About Nhite",
 	"tags": [],
 	"description": "",
-	"content": " Disclaimer: Nhite is in its really early development stage. It may become a product\u0026hellip; or not.\nWhat is Nhite ? Nhite is a terraform like binary that is exposing a gRPC service instead of a cli.\nDo I need Nhite? If you are working alone terraform or if you have susbscribed to terraform enterprise, probably not. But you may need it if you are willing to:\n work in team with terraform easily integrate terraform in a CI/CD easily use terraform on multiple environment (Dev, Prod, \u0026hellip;) [insert any cool use-case here]  "
+	"content": " Disclaimer: Nhite is in its really early development stage. It may become a product\u0026hellip; or not.\nWhat is Nhite ? Nhite is a binary that is implementing the terraform engine, but that is exposing a gRPC service instead of a cli.\nDo I need Nhite? If you are working with terraform alone, or if you have susbscribed to terraform enterprise, probably not.\nBut you may need it if you are willing to:\n work in team with terraform easily integrate terraform in a CI/CD easily use terraform on multiple environment (Dev, Prod, \u0026hellip;) [insert any cool use-case here]  Does Nhite mean anything? Nhite stands for Nhite is hip-terraform\n"
 },
 {
 	"uri": "https://nhite.github.io/principles/architecture/",
