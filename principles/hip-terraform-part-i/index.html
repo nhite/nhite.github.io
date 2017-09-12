@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="generator" content="Hugo 0.27" />
+    <meta name="description" content="This is a second part of the last article. I now really dig into terraform. This article will explain how to use the Terraform sub-packages in order to create a brand new binary that acts as a gRPC server instead of a cli.">
+
+
+    <title>Terraform is hip... Introducing Nhite :: Nhite is Hip-Terraform</title>
+    <link rel="shortcut icon" href="/images/favicon.png" type="image/x-icon" />
+    <link href="/css/nucleus.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/hybrid.css" rel="stylesheet">
+    <link href="/css/featherlight.min.css" rel="stylesheet">
+    <link href="/css/horsey.css" rel="stylesheet">
+    
+    <link href="/css/theme.css" rel="stylesheet">
+    
+    
+      <link href="/css/theme-gray.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/jquery-2.x.min.js"></script>
+    <style type="text/css">
+      :root #header + #content > #left > #rlblock_left {
+        display:none !important;
+      }
+    </style>
+
+    
+
+    
+
+  </head>
+  <body class="" data-url="/principles/hip-terraform-part-i/">
+    <nav id="sidebar" class="">
+
+
+
+
+
+<div class="highlightable">
+  <div id="header-wrapper">
+    <div id="header">
+       
+	 
+
+
+    </div>
+    
+        <div class="searchbox">
+    <label for="search-by"><i class="fa fa-search"></i></label>
+    <input data-search-input id="search-by" type="text" placeholder="Search...">
+    <span data-search-clear=""><i class="fa fa-close"></i></span>
+</div>
+<script type="text/javascript" src="/js/lunr.min.js"></script>
+<script type="text/javascript" src="/js/horsey.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/nhite.github.io\/";
+</script>
+<script type="text/javascript" src="/js/search.js"></script>
+
+    
+  </div>
+
+  
+    <ul class="topics">
+        
+            <li data-nav-id="/" class="dd-item">
+            <a href="/"><i class="fa fa-fw fa-home"></i></a>
+            </li>
+        
+        
+        
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/get_started/" class="dd-item 
+        
+        
+        parent
+        ">
+      <a href="/get_started/">
+        <span><i class='fa fa-paper-plane-o'></i> Get started</span>
+
+        
+        
+
+          
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+          
+
+        
+
+        
+      </a>
+      
+        <ul>
+          
+          
+          
+          
+        
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/get_started/about/" class="dd-item
+     
+      ">
+        <a href="/get_started/about/">
+        <span>About Nhite</span> 
+        
+        </a></li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/get_started/download/" class="dd-item
+     
+      ">
+        <a href="/get_started/download/">
+        <span>Download and test the POC</span> 
+        
+        </a></li>
+     
+  
+ 
+
+            
+          
+        
+        </ul>
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/principles/" class="dd-item 
+        parent
+        
+        
+        ">
+      <a href="/principles/">
+        <span><i class='fa fa-book'></i> Architecture</span>
+
+        
+        
+
+          
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+          
+
+        
+
+        
+      </a>
+      
+        <ul>
+          
+          
+          
+          
+        
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/principles/about/" class="dd-item
+     
+      ">
+        <a href="/principles/about/">
+        <span>About</span> 
+        
+        </a></li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/principles/from-cli-to-microservice/" class="dd-item
+     
+      ">
+        <a href="/principles/from-cli-to-microservice/">
+        <span>From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC</span> 
+        
+        </a></li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/principles/hip-terraform-part-i/" class="dd-item
+     active
+      ">
+        <a href="/principles/hip-terraform-part-i/">
+        <span>Terraform is hip... Introducing Nhite</span> 
+        
+        </a></li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/principles/architecture/" class="dd-item
+     
+      ">
+        <a href="/principles/architecture/">
+        <span>Architecture diagrams</span> 
+        
+        </a></li>
+     
+  
+ 
+
+            
+          
+        
+        </ul>
+              
+    </li>
+  
+ 
+
+          
+        
+
+        
+        <section id="shortcuts">
+            
+                <li class="" role="">
+                    <h3>More</h3>
+                    <a href="https://github.com/nhite/nhite"><i class='fa fa-github'></i> Github repo</a>
+                    
+                </li>
+            
+        </section>    
+        
+        
+
+        
+    </ul>
+    
+     
+    <section id="footer">
+      
+    </section>
+  </div>
+</nav>
+
+
+
+
+        <section id="body">
+        <div id="overlay"></div>
+        <div class="padding highlightable">
+        
+          <div id="top-bar">
+            
+
+            <div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+                <span id="sidebar-toggle-span">
+                  <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                    <i class="fa fa-bars"></i>
+                  </a>
+                </span>
+                <span id="toc-menu"><i class="fa fa-list-alt"></i></span>
+                <span class="links">
+                
+
+
+
+
+
+
+
+ <a href='/'></a> > <a href='/principles/'>Architecture</a> > Terraform is hip... Introducing Nhite
+
+ 
+
+ 
+
+   
+                </span>
+            </div>
+            <div class="progress">
+    <div class="wrapper">
+<nav id="TableOfContents">
+<ul>
+<li><a href="#the-terraform-structure">The terraform structure</a>
+<ul>
+<li>
+<ul>
+<li><a href="#the-cli-implementation">The cli implementation</a></li>
+<li><a href="#the-command-package">The <em>command</em> package</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#creating-a-new-binary">Creating a new binary</a>
+<ul>
+<li><a href="#the-grpc-contract">The gRPC contract</a></li>
+<li><a href="#fulfilling-the-contract">Fulfilling the contract</a></li>
+<li><a href="#how-to-initialize-the-grpccommand-object">How to initialize the <em>grpcCommand</em>  object</a></li>
+<li><a href="#about-the-ui">About the UI</a>
+<ul>
+<li><a href="#a-custom-ui">A custom UI</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#what-did-we-miss">What did we miss?</a>
+<ul>
+<li><a href="#multi-stack">Multi-stack</a></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+</div>
+
+          </div>
+        
+        
+        <div id="body-inner">
+          
+            <h1>Terraform is hip... Introducing Nhite</h1>
+          
+
+
+
+
+
+
+<p>In a previous post, I did some experiments with gRPC, protocol buffer and Terraform.
+The idea was to transform the &ldquo;terraform&rdquo; cli tool into a micro-service thanks to gRPC.</p>
+
+<p>This post is the second part of the experiment. I will go deeper in the code and see if it is possible
+to create a brand new utility, without hacking terraform. The idea is to import some of the packages that compose the binary
+and create my own service based on gRPC.</p>
+
+<h1 id="the-terraform-structure">The terraform structure</h1>
+
+<p>Terraform is a binary utility written in <code>go</code>.
+The <code>main</code> package resides in the root directory of the <code>terraform</code> directory.
+As usual with go projects, all other subdirectories are different modules.</p>
+
+<p>The whole business logic of terraform is coded into the subpackages. The &ldquo;<code>main</code>&rdquo; package is simply an envelop for kick-starting the utility (env variables, etc.) and to initiate the command line.</p>
+
+<h3 id="the-cli-implementation">The cli implementation</h3>
+
+<p>The command line flags are instantiated by Mitchell Hashimoto&rsquo;s cli package.
+As explained in the previous post, this cli package is calling a specific function for every action.</p>
+
+<h3 id="the-command-package">The <em>command</em> package</h3>
+
+<p>Every single action is fulfilling the <code>cli.Command</code> interface and is implemented in the <a href="https://godoc.org/github.com/hashicorp/terraform/command"><code>command</code></a> subpackage.
+Therefore, every &ldquo;action&rdquo; of terraform has a definition in the command package and the logic is coded into a <code>Run(args []string) int</code> method (see the <a href="https://godoc.org/github.com/mitchellh/cli#Command">doc of the Command interface for a complete definition</a>.</p>
+
+<h1 id="creating-a-new-binary">Creating a new binary</h1>
+
+<p>The idea is not to hack any of the packages of terraform to allow an easier maintenance of my code.
+In order to create a custom service, I will instead implement a new utility; therefore a new <code>main</code> package.
+This package will implement a gRPC server. This server will implement wrappers around the functions declared in the <code>terraform.Command</code> package.</p>
+
+<p>For the purpose of my poc, I will only implement three actions of terraform:</p>
+
+<ul>
+<li><code>terraform init</code></li>
+<li><code>terraform plan</code></li>
+<li><code>terraform apply</code></li>
+</ul>
+
+<h2 id="the-grpc-contract">The gRPC contract</h2>
+
+<p>In order to create a gRPC server, we need a service definition.
+To keep it simple, let&rsquo;s consider the contract defined in the previous post (<a href="https://blog.owulveryck.info/2017/09/02/from-command-line-tools-to-microservices---the-example-of-hashicorp-tools-terraform-and-grpc.html#creating-the-protobuf-contract">cf the section: Creating the protobuf contract</a>).
+I simply add the missing procedure calls:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #a6e22e">syntax</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&quot;proto3&quot;</span><span style="color: #f8f8f2">;</span>
+
+<span style="color: #f92672">package</span> <span style="color: #f8f8f2">pbnhite;</span>
+
+<span style="color: #66d9ef">service</span> <span style="color: #f8f8f2">Terraform</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">rpc</span> <span style="color: #f8f8f2">Init</span> <span style="color: #f8f8f2">(Arg)</span> <span style="color: #66d9ef">returns</span> <span style="color: #f8f8f2">(Output)</span> <span style="color: #f8f8f2">{}</span>
+    <span style="color: #66d9ef">rpc</span> <span style="color: #f8f8f2">Plan</span> <span style="color: #f8f8f2">(Arg)</span> <span style="color: #66d9ef">returns</span> <span style="color: #f8f8f2">(Output)</span> <span style="color: #f8f8f2">{}</span>
+    <span style="color: #66d9ef">rpc</span> <span style="color: #f8f8f2">Apply</span> <span style="color: #f8f8f2">(Arg)</span> <span style="color: #66d9ef">returns</span> <span style="color: #f8f8f2">(Output)</span> <span style="color: #f8f8f2">{}</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">message</span> <span style="color: #a6e22e">Arg</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">repeated</span> <span style="color: #66d9ef">string</span> <span style="color: #a6e22e">args</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">2</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">message</span> <span style="color: #a6e22e">Output</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">int32</span> <span style="color: #a6e22e">retcode</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">1</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #66d9ef">bytes</span>  <span style="color: #a6e22e">stdout</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">2</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #66d9ef">bytes</span> <span style="color: #a6e22e">stderr</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">3</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<h2 id="fulfilling-the-contract">Fulfilling the contract</h2>
+
+<p>As described previoulsy, I am creating a <code>grpcCommand</code> structure that will have the required methods to fulfill the contract:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">grpcCommands</span> <span style="color: #66d9ef">struct</span> <span style="color: #f8f8f2">{}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Init</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #f92672">...</span><span style="color: #f8f8f2">.</span>
+<span style="color: #f8f8f2">}</span>
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Plan</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #f92672">...</span><span style="color: #f8f8f2">.</span>
+<span style="color: #f8f8f2">}</span>
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Apply</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #f92672">...</span><span style="color: #f8f8f2">.</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>In the previous post, I have filled the <code>grpcCommand</code> structure with a <code>map</code> filled with the command definition.
+The idea was to keep the same cli interface.
+As we are now building a completely new binary with only a gRPC interface, we don&rsquo;t need that anymore.
+Indeed, there is still a need to execute the <code>Run</code> method of every terraform command.</p>
+
+<p>Let&rsquo;s take the example of the Init command.</p>
+
+<p>Let&rsquo;s see the definition of the command by looking at the <a href="https://godoc.org/github.com/hashicorp/terraform/command#InitCommand">godoc</a>:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">InitCommand</span> <span style="color: #66d9ef">struct</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #a6e22e">Meta</span>
+    <span style="color: #75715e">// contains filtered or unexported fields</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>This command holds a substructure called <code>Meta</code>. <code>Meta</code> is defined <a href="https://godoc.org/github.com/hashicorp/terraform/command#Meta">here</a> and holds <em>the meta-options that are available on all or most commands</em>. Obviously we need a Meta definition in the command to make it work properly.</p>
+
+<p>For now, let&rsquo;s add it to the <code>grpcCommand</code> globally, and we will see later how to implement it.</p>
+
+<p>Here is the gRPC implementation of the contract:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">grpcCommands</span> <span style="color: #66d9ef">struct</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #a6e22e">meta</span> <span style="color: #a6e22e">command</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Meta</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Init</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #75715e">// ...</span>
+    <span style="color: #a6e22e">tfCommand</span> <span style="color: #f92672">:=</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">command</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">InitCommand</span><span style="color: #f8f8f2">{</span>
+        <span style="color: #a6e22e">Meta</span><span style="color: #f8f8f2">:</span> <span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">meta</span><span style="color: #f8f8f2">,</span>
+    <span style="color: #f8f8f2">}</span>
+    <span style="color: #a6e22e">ret</span> <span style="color: #f92672">:=</span> <span style="color: #f8f8f2">int32(</span><span style="color: #a6e22e">tfCommand</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Run</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">in</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">))</span>
+    <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<h2 id="how-to-initialize-the-grpccommand-object">How to initialize the <em>grpcCommand</em>  object</h2>
+
+<p>Now that we have a proper <code>grpcCommand</code> than can be registered to the grpc server, let&rsquo;s see how to create an instance.
+As the grpcCommand only contains one field, we simply need to create a <code>meta</code> object.</p>
+
+<p>Let&rsquo;s simply copy/paste the code done in terraform&rsquo;s main package and we now have:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">var</span> <span style="color: #a6e22e">PluginOverrides</span> <span style="color: #a6e22e">command</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">PluginOverrides</span>
+<span style="color: #a6e22e">meta</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">command</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Meta</span><span style="color: #f8f8f2">{</span>
+    <span style="color: #a6e22e">Color</span><span style="color: #f8f8f2">:</span>            <span style="color: #66d9ef">false</span><span style="color: #f8f8f2">,</span>
+    <span style="color: #a6e22e">GlobalPluginDirs</span><span style="color: #f8f8f2">:</span> <span style="color: #a6e22e">globalPluginDirs</span><span style="color: #f8f8f2">(),</span>
+    <span style="color: #a6e22e">PluginOverrides</span><span style="color: #f8f8f2">:</span>  <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">PluginOverrides</span><span style="color: #f8f8f2">,</span>
+    <span style="color: #a6e22e">Ui</span><span style="color: #f8f8f2">:</span>               <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">grpcUI</span><span style="color: #f8f8f2">{},</span>
+<span style="color: #f8f8f2">}</span>
+<span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">RegisterTerraformServer</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">grpcServer</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">meta</span><span style="color: #f8f8f2">:</span> <span style="color: #a6e22e">meta</span><span style="color: #f8f8f2">})</span>
+</pre></div>
+
+
+<p>According to the comments in the code, the <code>globalPluginDirs()</code> <em>returns directories that should be searched for
+globally-installed plugins (not specific to the current configuration)</em>.
+I will simply copy the function into my main package</p>
+
+<h2 id="about-the-ui">About the UI</h2>
+
+<p>In the example cli that I developped in the previous post, what I did was to redirect stdout and stderr to an array of bytes, in order to capture it and send it back to a gRPC client.
+I noticed that this was not working with Terraform.
+This is because of the UI!
+UI is an interface whose purpose is to get the output stream and write it down to a specific io.Writer.</p>
+
+<p>Our tool will need a custom UI.</p>
+
+<h3 id="a-custom-ui">A custom UI</h3>
+
+<p>As UI is an interface (<a href="https://godoc.org/github.com/mitchellh/cli#Ui">see the doc here</a>), it is easy to implement our own. Let&rsquo;s define a structure that holds two array of bytes called <code>stdout</code> and <code>stderr</code>. Then let&rsquo;s implement the methods that will write into this elements:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">grpcUI</span> <span style="color: #66d9ef">struct</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #a6e22e">stdout</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span>
+    <span style="color: #a6e22e">stderr</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcUI</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">msg</span> <span style="color: #66d9ef">string</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">stdout</span> <span style="color: #f8f8f2">=</span> <span style="color: #f8f8f2">append(</span><span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">[]byte(</span><span style="color: #a6e22e">msg</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">...</span><span style="color: #f8f8f2">)</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p><em>Note 1</em>: I omit the methods <code>Info</code>, <code>Warn</code>, and <code>Error</code> for brevity.</p>
+
+<p><em>Note 2</em>: For now, I do not implement any logic into the <code>Ask</code> and <code>AskSecret</code> methods. Therefore, my client will not be able to ask something. But as gRPC is bidirectional, it would be possible to implement such an interaction.</p>
+
+<p>Now, we can instantiate this UI for every call, and assing it to the meta-options of the command:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">var</span> <span style="color: #a6e22e">stdout</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span>
+<span style="color: #66d9ef">var</span> <span style="color: #a6e22e">stderr</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span>
+<span style="color: #a6e22e">myUI</span> <span style="color: #f92672">:=</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">grpcUI</span><span style="color: #f8f8f2">{</span>
+    <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">:</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span>
+    <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">:</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">,</span>
+<span style="color: #f8f8f2">}</span>
+<span style="color: #a6e22e">tfCommand</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Meta</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Ui</span> <span style="color: #f8f8f2">=</span> <span style="color: #a6e22e">myUI</span>
+</pre></div>
+
+
+<p>So far, so good: we now have a new terraform binary, that is working via gRPC with a very little bit of code.</p>
+
+<h1 id="what-did-we-miss">What did we miss?</h1>
+
+<h2 id="multi-stack">Multi-stack</h2>
+
+<p>It is fun but not usable for real purpose because the server needs to be launched from the directory where the tf files are&hellip;
+Therefore the service can only be used for one single terraform stack&hellip; Come on!</p>
+
+<p>Let&rsquo;s change that and pass as a parameter of the RPC call the directory where the server needs to work. It is as simple as adding an extra argument to the <code>message Arg</code>:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">message</span> <span style="color: #a6e22e">Arg</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">string</span> <span style="color: #a6e22e">workingDir</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">1</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #66d9ef">repeated</span> <span style="color: #66d9ef">string</span> <span style="color: #a6e22e">args</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">2</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>and then, simply do a <code>change directory</code> in the implementation of the command:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #66d9ef">func</span> <span style="color: #f8f8f2">(</span><span style="color: #a6e22e">g</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">grpcCommands</span><span style="color: #f8f8f2">)</span> <span style="color: #a6e22e">Init</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">ctx</span> <span style="color: #a6e22e">context</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Context</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">in</span> <span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Arg</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">(</span><span style="color: #f92672">*</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Chdir</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">in</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">WorkingDir</span><span style="color: #f8f8f2">)</span>
+    <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{int32(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">),</span> <span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">},</span> <span style="color: #a6e22e">err</span>
+    <span style="color: #f8f8f2">}</span>
+    <span style="color: #a6e22e">tfCommand</span> <span style="color: #f92672">:=</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">command</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">InitCommand</span><span style="color: #f8f8f2">{</span>
+        <span style="color: #a6e22e">Meta</span><span style="color: #f8f8f2">:</span> <span style="color: #a6e22e">g</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">meta</span><span style="color: #f8f8f2">,</span>
+    <span style="color: #f8f8f2">}</span>
+    <span style="color: #66d9ef">var</span> <span style="color: #a6e22e">stdout</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span>
+    <span style="color: #66d9ef">var</span> <span style="color: #a6e22e">stderr</span> <span style="color: #f8f8f2">[]</span><span style="color: #66d9ef">byte</span>
+    <span style="color: #a6e22e">myUI</span> <span style="color: #f92672">:=</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">grpcUI</span><span style="color: #f8f8f2">{</span>
+        <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">:</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span>
+        <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">:</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">,</span>
+    <span style="color: #f8f8f2">}</span>
+    <span style="color: #a6e22e">ret</span> <span style="color: #f92672">:=</span> <span style="color: #f8f8f2">int32(</span><span style="color: #a6e22e">tfCommand</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Run</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">in</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">))</span>
+    <span style="color: #66d9ef">return</span> <span style="color: #f92672">&amp;</span><span style="color: #a6e22e">pb</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Output</span><span style="color: #f8f8f2">{</span><span style="color: #a6e22e">ret</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stdout</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">stderr</span><span style="color: #f8f8f2">},</span> <span style="color: #a6e22e">err</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+
+<footer class=" footline" >
+	
+</footer>
+
+
+
+
+        
+
+      </div>
+    </div>
+
+    
+ 
+    
+
+    <div id="navigation">
+        
+        
+        
+        
+            
+            
+                
+                    
+                    
+                
+                
+
+                    
+                    
+                        
+                    
+                    
+
+                    
+                        
+            
+            
+                
+                    
+                        
+                        
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+                        
+            
+            
+                
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+            
+        
+                    
+                        
+            
+            
+                
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+            
+        
+                    
+            
+        
+                    
+                        
+            
+            
+                
+                    
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+                        
+            
+            
+                
+                    
+                        
+                        
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+            
+        
+                    
+                        
+            
+            
+                
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+            
+        
+                    
+                        
+            
+            
+                
+                    
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+            
+        
+                    
+                        
+            
+            
+                
+                    
+                        
+                        
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+            
+        
+                    
+            
+        
+                    
+            
+        
+        
+        
+
+
+        
+            <a class="nav nav-prev" href="/principles/from-cli-to-microservice/" title="From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC"> <i class="fa fa-chevron-left"></i></a>
+        
+        
+            <a class="nav nav-next" href="/principles/architecture/" title="Architecture diagrams" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
+        
+    </div>
+
+    </section>
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>    
+
+    <script src="/js/clipboard.min.js"></script>
+<script src="/js/featherlight.min.js"></script>
+<script src="/js/html5shiv-printshiv.min.js"></script>
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="/js/modernizr.custom.71422.js"></script>
+<script src="/js/learn.js"></script>
+<script src="/js/hugo-learn.js"></script>
+
+
+<link href="/mermaid/mermaid.css" type="text/css" rel="stylesheet"/>
+<script src="/mermaid/mermaid.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+    
+
+  </body>
+</html>
+

@@ -7,6 +7,7 @@ images:
 - /assets/images/terraformcli.png
 tags:
 title: From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC
+weight: 2
 ---
 
 This article has been originally published on [Olivier Wulveryck's blog](https://blog.owulveryck.info/2017/09/02/from-command-line-tools-to-microservices---the-example-of-hashicorp-tools-terraform-and-grpc.html)
