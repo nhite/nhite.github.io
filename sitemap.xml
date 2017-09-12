@@ -3,6 +3,19 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://nhite.github.io/principles/about/</loc>
+  </url>
+  
+  <url>
+    <loc>https://nhite.github.io/get_started/</loc>
+  </url>
+  
+  <url>
+    <loc>https://nhite.github.io/principles/</loc>
+    <lastmod>2017-09-02T13:28:36+02:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://nhite.github.io/principles/from-cli-to-microservice/</loc>
     <lastmod>2017-09-02T13:28:36+02:00</lastmod>
   </url>
@@ -17,6 +30,10 @@
   </url>
   
   <url>
+    <loc>https://nhite.github.io/get_started/about/</loc>
+  </url>
+  
+  <url>
     <loc>https://nhite.github.io/principles/architecture/</loc>
   </url>
   
@@ -26,9 +43,7 @@
   </url>
   
   <url>
-    <loc>https://nhite.github.io/principles/</loc>
-    <lastmod>2017-09-02T13:28:36+02:00</lastmod>
-    <priority>0</priority>
+    <loc>https://nhite.github.io/get_started/download/</loc>
   </url>
   
   <url>

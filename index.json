@@ -1,5 +1,26 @@
 [
 {
+	"uri": "https://nhite.github.io/principles/about/",
+	"title": "About",
+	"tags": [],
+	"description": "",
+	"content": "You can find here anything that is related to the Nhite development and core engine.\n"
+},
+{
+	"uri": "https://nhite.github.io/get_started/",
+	"title": "Get started",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "https://nhite.github.io/principles/",
+	"title": "Architecture",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
 	"uri": "https://nhite.github.io/principles/from-cli-to-microservice/",
 	"title": "From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC",
 	"tags": [],
@@ -21,6 +42,13 @@
 	"content": " Hip-Terraform "
 },
 {
+	"uri": "https://nhite.github.io/get_started/about/",
+	"title": "About nhite",
+	"tags": [],
+	"description": "",
+	"content": "Nhite is in its really early development stage.\nIt may become a product\u0026hellip; or not.\n"
+},
+{
 	"uri": "https://nhite.github.io/principles/architecture/",
 	"title": "Architecture diagrams",
 	"tags": [],
@@ -35,11 +63,11 @@
 	"content": ""
 },
 {
-	"uri": "https://nhite.github.io/principles/",
-	"title": "Principles",
+	"uri": "https://nhite.github.io/get_started/download/",
+	"title": "Download and test the POC",
 	"tags": [],
 	"description": "",
-	"content": ""
+	"content": "So far Nhite is mostly a proof-of-concept about how to transform terraform in a gRPC service.\nIf you want to test what\u0026rsquo;s done so far, you can download a \u0026ldquo;nhite server\u0026rdquo; and a \u0026ldquo;sample nhite client\u0026rdquo; from github.\n The nhite server A simple nhite client  "
 },
 {
 	"uri": "https://nhite.github.io/tags/",

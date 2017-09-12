@@ -12,6 +12,15 @@
     
     
     <item>
+      <title>About</title>
+      <link>https://nhite.github.io/principles/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://nhite.github.io/principles/about/</guid>
+      <description>You can find here anything that is related to the Nhite development and core engine.</description>
+    </item>
+    
+    <item>
       <title>From command line tools to microservices - The example of Hashicorp tools (terraform) and gRPC</title>
       <link>https://nhite.github.io/principles/from-cli-to-microservice/</link>
       <pubDate>Sat, 02 Sep 2017 13:28:36 +0200</pubDate>
@@ -31,12 +40,33 @@ This post is a little bit different from the last ones. As usual, the introducti
     </item>
     
     <item>
+      <title>About nhite</title>
+      <link>https://nhite.github.io/get_started/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://nhite.github.io/get_started/about/</guid>
+      <description>Nhite is in its really early development stage.
+It may become a product&amp;hellip; or not.</description>
+    </item>
+    
+    <item>
       <title>Architecture diagrams</title>
       <link>https://nhite.github.io/principles/architecture/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://nhite.github.io/principles/architecture/</guid>
       <description>sequenceDiagram participant Client participant Nhite participant Backend participant TerraformLib Client-Nhite: push Nhite-Backend: push Nhite-Client: ID Client-Nhite: plan ID Nhite-Backend: Get ID Nhite-Nhite: cd ID Nhite--TerraformLib: commands/plan.go Nhite-Client: result Client-Nhite: apply ID Nhite-Backend: Get ID Nhite-Nhite: cd ID Nhite--TerraformLib: commands/apply.go Nhite-Client: result  </description>
+    </item>
+    
+    <item>
+      <title>Download and test the POC</title>
+      <link>https://nhite.github.io/get_started/download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://nhite.github.io/get_started/download/</guid>
+      <description>So far Nhite is mostly a proof-of-concept about how to transform terraform in a gRPC service.
+If you want to test what&amp;rsquo;s done so far, you can download a &amp;ldquo;nhite server&amp;rdquo; and a &amp;ldquo;sample nhite client&amp;rdquo; from github.
+ The nhite server A simple nhite client  </description>
     </item>
     
   </channel>

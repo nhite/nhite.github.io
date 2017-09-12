@@ -1,3 +1,4 @@
+
 ---
 title: Architecture diagrams
 ---
@@ -24,4 +25,3 @@ sequenceDiagram
     Nhite-->>TerraformLib: commands/apply.go
     Nhite->>Client: result
 {{< /mermaid >}}
-
