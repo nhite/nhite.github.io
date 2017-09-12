@@ -10,6 +10,7 @@ home = [ "HTML", "RSS", "JSON"]
 
 [params]
 themeVariant = "gray"
+googleAnalytics = "UA-69673850-3"
 
 
 [[menu.shortcuts]]
