@@ -230,3 +230,5 @@ func (g *grpcCommands) Init(ctx context.Context, in *pb.Arg) (*pb.Output, error)
     return &pb.Output{ret, stdout, stderr}, err
 }
 {{</ highlight >}}
+
+__TO BE COMPLETED__
