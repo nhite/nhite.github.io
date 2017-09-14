@@ -6,17 +6,19 @@ theme = "docdock"
 
 
 [outputs]
-home = [ "HTML", "RSS", "JSON"]
+  home = [ "HTML", "RSS", "JSON"]
 
 [params]
-themeVariant = "gray"
-googleAnalytics = "UA-69673850-3"
+  themeVariant = "gray"
+  googleAnalytics = "UA-69673850-3"
+  logo = "/images/logo.png"
+
 
 
 [[menu.shortcuts]]
-pre = "<h3>More</h3>"
-name = "<i class='fa fa-github'></i> Github repo"
-identifier = "ds"
-url = "https://github.com/nhite/nhite"
-weight = 1
+  pre = "<h3>More</h3>"
+  name = "<i class='fa fa-github'></i> Github repo"
+  identifier = "ds"
+  url = "https://github.com/nhite/nhite"
+  weight = 1
 
